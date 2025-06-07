@@ -19,12 +19,12 @@ const (
 // CreateEmptyFile 空ファイルを作成する
 func CreateEmptyFile(name string) error {
 	prefix := time.Now().Format(FileFormat)
-	f, err := os.OpenFile(fmt.Sprintf(prefix, name), os.O_RDONLY|os.O_CREATE, 0666)
+	// ensure the file is created and truncated to zero bytes
+	f, err := os.OpenFile(fmt.Sprintf(prefix, name), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
-	f.Close()
-	return nil
+	return f.Close()
 }
 
 // CreateDir ディレクトリを作成する
