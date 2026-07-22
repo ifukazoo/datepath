@@ -42,17 +42,14 @@ go install ./cmd/mkdatedir ./cmd/mkdatememo ./cmd/updatepath
 ```
 
 `go install` により 3 つの exe が `%USERPROFILE%\go\bin\` に配置されます。
+右クリックメニューは同梱 `right_click.reg` がこのパスを `%USERPROFILE%` で
+参照するため、PATH の追加は不要です。
 
-### 3. PATH を確認する
+### 3. （任意）PATH を通す — コマンドラインから直接叩きたい場合
 
-```powershell
-where mkdatedir
-```
-
-`C:\Users\<あなた>\go\bin\mkdatedir.exe` のように表示されれば PATH が通っています。
-
-「情報: 与えられたパターンのファイルが見つかりませんでした。」と出た場合は、
-`%USERPROFILE%\go\bin` を PATH に追加してください。
+コマンドプロンプトや PowerShell で `mkdatedir` などを直接タイプして使いたい場合は、
+`%USERPROFILE%\go\bin` を User PATH に追加します。右クリックメニューだけ使う場合は
+この節はスキップして構いません。
 
 - GUI 手順: `Windows キー` → 「環境変数を編集」→ ユーザー環境変数の `Path` → 「編集」→ 「新規」→ `%USERPROFILE%\go\bin` を追加 → 開いている PowerShell を再起動。
 - コマンド 1 行で追加する場合:
@@ -60,6 +57,14 @@ where mkdatedir
   [Environment]::SetEnvironmentVariable("Path", $Env:Path + ";$Env:USERPROFILE\go\bin", "User")
   ```
   こちらも設定後は PowerShell の再起動が必要です。
+
+反映確認:
+
+```powershell
+where mkdatedir
+```
+
+`C:\Users\<あなた>\go\bin\mkdatedir.exe` が返れば通っています。
 
 ## コマンドラインでの使い方
 
@@ -77,6 +82,8 @@ updatepath C:\work\20240101_1200_作業       # → C:\work\20260720_1830_作業
 
 同梱の `right_click.reg` を使うと、エクスプローラーの右クリックから直接呼び出せるようになります。
 このファイルは `HKEY_CURRENT_USER` に書き込むため、管理者権限は不要です。
+コマンドの実行パスは `%USERPROFILE%\go\bin\<exe>` を `REG_EXPAND_SZ` として登録するため、
+Windows がログオンユーザーに応じて自動で展開します。ユーザー名の書き換えや PATH 追加は不要です。
 
 ### 登録
 
@@ -148,8 +155,9 @@ Remove-Item "$Env:USERPROFILE\go\bin\updatepath.exe"
 
 ## トラブルシューティング
 
-- **`where mkdatedir` で見つからない** — `%USERPROFILE%\go\bin` を PATH に追加し、PowerShell を再起動してください（上記「セットアップ 3」）。
 - **右クリックメニューに項目が出ない** — Windows 11 では簡易メニューに隠れるため、「その他のオプションを表示」または `Shift+F10` で開いてください。それでも出ない場合は `explorer.exe` を再起動。
+- **右クリックしても何も起きない／一瞬コンソールが開いて消える** — `%USERPROFILE%\go\bin\` に exe が入っているか確認してください。存在しない場合は `go install ./cmd/mkdatedir ./cmd/mkdatememo ./cmd/updatepath` を再実行。
+- **`where mkdatedir` で見つからない**（コマンドラインから使いたい場合のみ） — `%USERPROFILE%\go\bin` を PATH に追加し、PowerShell を再起動してください（上記「セットアップ 3」）。右クリック用途では PATH は関係しません。
 - **SmartScreen で `mkdatedir.exe` の起動がブロックされる** — `go install` でローカルビルドした exe は通常ブロックされませんが、警告が出たら「詳細情報」→「実行」で許可してください。
 - **`updatepath` が `can't update path` エラー** — 対象パスの先頭が `YYYYMMDD_HHMM` の形式でないと更新できません。日時プレフィックスの有無を確認してください。
 - **日本語の `<name>` が化ける** — 生じない想定です。もし化けた場合はコンソールのコードページ（`chcp`）を確認してください。

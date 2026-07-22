@@ -13,7 +13,7 @@
 | :-- | :-- | :-- |
 | 1 | Win11 の右クリックが簡易メニュー化されており、旧式のレジストリ登録項目は「その他のオプションを表示」(Shift+F10) の中に隠れる | README で明記。任意手順として常時詳細メニュー化のレジストリ設定も案内 |
 | 2 | 既存 `.reg` が `HKLM` 参照で管理者権限を要求 | `HKCU` 版に置き換え |
-| 3 | 既存 `.reg` が `mkdatedir.exe` / `updatepath.exe` を絶対パス無しで参照 → PATH 必須 | `go install` で `%USERPROFILE%\go\bin` に配置し PATH を通す手順を README に記載 |
+| 3 | 既存 `.reg` が `mkdatedir.exe` / `updatepath.exe` を絶対パス無しで参照 → PATH 必須。Explorer は起動時の PATH スナップショットを保持するため実際に呼び出せず、実測で NG（2026-07-22） | `.reg` を `REG_EXPAND_SZ` (`hex(2)`) にし、コマンド値に `%USERPROFILE%\go\bin\<exe>` を埋め込む。Windows が実行時に展開するため、ユーザー環境非依存で PATH 追加も不要 |
 | 4 | `mkdatememo` のレジストリ登録エントリが欠落 | HKCU 版 `.reg` に追加 |
 | 5 | `DateDirUpdate` は `Directory\shell` のみでファイル対象外 | 現行仕様のまま README で明記 |
 | 6 | 未署名 exe の SmartScreen 警告 | README のトラブルシューティングで案内 |
@@ -22,12 +22,12 @@
 ## 変更対象ファイル
 
 1. `README.md` — 新規作成（日本語、Windows 11 向けフルスコープ手順）。
-2. `right_click.reg` — HKLM 版を削除し HKCU 版に置き換え（UTF-16 LE + BOM、CRLF）。
-   - `HKCU\Software\Classes\Directory\Background\shell\DateDirCreate\command` → `"mkdatedir.exe" "%V"`
-   - `HKCU\Software\Classes\LibraryFolder\Background\shell\DateDirCreate\command` → `"mkdatedir.exe" "%V"`
-   - `HKCU\Software\Classes\Directory\shell\DateDirUpdate\command` → `"updatepath.exe" "%1"`
-   - `HKCU\Software\Classes\Directory\Background\shell\DateMemoCreate\command` → `"mkdatememo.exe" "%V"`（新規）
-   - `HKCU\Software\Classes\LibraryFolder\Background\shell\DateMemoCreate\command` → `"mkdatememo.exe" "%V"`（新規）
+2. `right_click.reg` — HKLM 版を削除し HKCU 版に置き換え（UTF-16 LE + BOM、CRLF）。すべての `\command` 既定値は `REG_EXPAND_SZ` (`hex(2):...`) で登録する。
+   - `HKCU\...\Directory\Background\shell\DateDirCreate\command` → `"%USERPROFILE%\go\bin\mkdatedir.exe" "%V"`
+   - `HKCU\...\LibraryFolder\Background\shell\DateDirCreate\command` → `"%USERPROFILE%\go\bin\mkdatedir.exe" "%V"`
+   - `HKCU\...\Directory\Background\shell\DateMemoCreate\command` → `"%USERPROFILE%\go\bin\mkdatememo.exe" "%V"`（新規）
+   - `HKCU\...\LibraryFolder\Background\shell\DateMemoCreate\command` → `"%USERPROFILE%\go\bin\mkdatememo.exe" "%V"`（新規）
+   - `HKCU\...\Directory\shell\DateDirUpdate\command` → `"%USERPROFILE%\go\bin\updatepath.exe" "%1"`
 3. `.gitignore` — 末尾に `/mkdatedir` を追加。
 
 Go コードは変更しない。
